@@ -11,16 +11,33 @@ BagNode::BagNode(BaseItem* _item = nullptr, BagNode* _nextPtr = nullptr) : item(
 
 /* * * BaseBag * * */
 
-BaseBag::BaseBag(BaseKnight* _knight)
+BaseBag::BaseBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote) : 
+    countItem(_countPhoenixDownI + _countAntidote), knight(_knight), head(nullptr), tail(nullptr)
 {
-    countItem = 0;
-    knight = _knight;
-    head = nullptr;
-    tail = nullptr;
+    if (countItem == 0)
+    {
+        head = nullptr;
+        tail = nullptr;
+    }
+    else
+    {
+        for (int i = 0; i < _countPhoenixDownI; i++)
+        {
+            PhoenixDownI phoenixDown1;
+            insertFirst(&phoenixDown1);
+        }
+        for (int i = 0; i < _countAntidote; i++)
+        {
+            Antidote antidote;
+            insertFirst(&antidote);
+        }
+    }
 }
 
 bool BaseBag::insertFirst(BaseItem* _new_item)
 {
+    // create a deep copy from the parameter, because the source outside the parameter will
+    // be deleted after single loop
     BagNode* newItem = new BagNode(_new_item, nullptr);
     if (isEmpty() == true)
     {
@@ -156,9 +173,11 @@ BaseKnight* BaseKnight::create(int _id, int _maxhp, int _level, int _gil, int _a
         new_knight = new NormalKnight();
 
     new_knight->id = _id;
-    new_knight->maxhp = _maxhp;
+    new_knight->hp = _maxhp;
     new_knight->level = _level;
     new_knight->gil = _gil;
+    new_knight->bag = new BaseBag(new_knight, _phoenixdownI, _antidote);
+
     return new_knight;
 }
 
@@ -201,9 +220,9 @@ bool BaseKnight::isDragonKnight(int _maxHP)
         return false;
 }
 
-BaseKnight::BaseKnight() : knightType(NORMAL), id(0), hp(0), maxhp(0), level(0), gil(0)
+BaseKnight::BaseKnight() : id(0), hp(0), maxhp(0), level(0), gil(0), bag(nullptr), knightType(NORMAL)
 {
-    bag = new BaseBag(this);
+    /*bag = new BaseBag(this);*/
 }
 
 int BaseKnight::getGil()
@@ -239,10 +258,6 @@ void BaseKnight::setLevel(int _new_level)
 void BaseKnight::setGil(int _new_gil)
 {
     gil = _new_gil;
-}
-
-void BaseKnight::setBag()
-{
 }
 
 string BaseKnight::toString() const {

@@ -87,7 +87,7 @@ protected:
     BagNode* head;
     BagNode* tail;
 public:
-    BaseBag(BaseKnight* knight);
+    BaseBag(BaseKnight* knight, int countPhoenixDownI, int countAntidote);
     virtual bool insertFirst(BaseItem* item);
     int getCount();
     bool isEmpty();
@@ -121,7 +121,6 @@ public:
     void setHP(int _new_hp);
     void setLevel(int _new_level);
     void setGil(int _new_gil);
-    void setBag();
     string toString() const;
     bool fight();
 };
