@@ -53,6 +53,8 @@ int BaseBag::getCount()
     return countItem;
 }
 
+
+// Definition of these two virtual methods can be changed or override in the future
 BaseItem* BaseBag::get(ItemType _itemType)
 {
     return getBagNode(_itemType)->item;
