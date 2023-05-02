@@ -12,14 +12,9 @@ BagNode::BagNode(BaseItem* _item = nullptr, BagNode* _nextPtr = nullptr) : item(
 /* * * BaseBag * * */
 
 BaseBag::BaseBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote) : 
-    countItem(_countPhoenixDownI + _countAntidote), knight(_knight), head(nullptr), tail(nullptr)
+    countItem(0), knight(_knight), head(nullptr), tail(nullptr)
 {
-    if (countItem == 0)
-    {
-        head = nullptr;
-        tail = nullptr;
-    }
-    else
+    if (_countPhoenixDownI + _countAntidote > 0)
     {
         for (int i = 0; i < _countPhoenixDownI; i++)
         {
@@ -50,7 +45,7 @@ bool BaseBag::insertFirst(BaseItem* _new_item)
         head = newItem;
     }
     countItem++;
-    return false;
+    return true;
 }
 
 int BaseBag::getCount()
@@ -148,11 +143,11 @@ bool BaseBag::isEmpty()
 {
     if (head == nullptr)
     {
-        return false;
+        return true;
     }
     else
     {
-        return true;
+        return false;
     }
 }
 
@@ -173,6 +168,7 @@ BaseKnight* BaseKnight::create(int _id, int _maxhp, int _level, int _gil, int _a
         new_knight = new NormalKnight();
 
     new_knight->id = _id;
+    new_knight->maxhp = _maxhp;
     new_knight->hp = _maxhp;
     new_knight->level = _level;
     new_knight->gil = _gil;
@@ -355,8 +351,9 @@ ArmyKnights::ArmyKnights(const string& _file_armyknights)
         file >> HP >> level >> phoenixdownI >> gil >> antidote;
         listOfKnights[i] = BaseKnight::create(i, HP, level, gil, antidote, phoenixdownI);
         cout << listOfKnights[i]->toString() << endl;
-        //cout << listOfKnights[i]->getHP() << endl;
-        //cout << listOfKnights[i]->getKnightType() << endl;
+        cout << listOfKnights[i]->getHP() << endl;
+        cout << listOfKnights[i]->getKnightType() << endl;
+        cout << listOfKnights[i]->getBag()->toString();
     }
 }
 
@@ -543,6 +540,7 @@ void Antidote::use(BaseKnight* knight)
 
 Antidote::Antidote()
 {
+    itemType = ANTIDOTE;
 }
 
 
@@ -550,6 +548,11 @@ Antidote::Antidote()
 /* * * Antidote * * */
 
 /* * * PhoenixDownI * * */
+
+PhoenixDownI::PhoenixDownI()
+{
+    itemType = PHOENIX_1;
+}
 
 bool PhoenixDownI::canUse(BaseKnight* _knight)
 {
@@ -564,6 +567,11 @@ void PhoenixDownI::use(BaseKnight* _knight)
 
 /* * * PhoenixDownII * * */
 
+PhoenixDownII::PhoenixDownII()
+{
+    itemType = PHOENIX_2;
+}
+
 bool PhoenixDownII::canUse(BaseKnight* _knight)
 {
     return false;
@@ -577,6 +585,11 @@ void PhoenixDownII::use(BaseKnight* _knight)
 
 /* * * PhoenixDownIII * * */
 
+PhoenixDownIII::PhoenixDownIII()
+{
+    itemType = PHOENIX_3;
+}
+
 bool PhoenixDownIII::canUse(BaseKnight* _knight)
 {
     return false;
@@ -589,6 +602,11 @@ void PhoenixDownIII::use(BaseKnight* _knight)
 /* * * PhoenixDownIII * * */
 
 /* * * PhoenixDownIV * * */
+
+PhoenixDownIV::PhoenixDownIV()
+{
+    itemType = PHOENIX_4;
+}
 
 bool PhoenixDownIV::canUse(BaseKnight* _knight)
 {

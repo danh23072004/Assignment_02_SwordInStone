@@ -24,8 +24,6 @@ public:
 
 class Antidote : public BaseItem
 {
-protected:
-    ItemType itemType = ANTIDOTE;
 public:
     Antidote();
     virtual bool canUse(BaseKnight* knight) override;
@@ -34,36 +32,32 @@ public:
 
 class PhoenixDownI : public BaseItem
 {
-protected:
-    ItemType itemType = PHOENIX_1;
 public:
+    PhoenixDownI();
     virtual bool canUse(BaseKnight* knight) override;
     virtual void use(BaseKnight* knight) override;
 };
 
 class PhoenixDownII : public BaseItem
 {
-protected:
-    ItemType itemType = PHOENIX_2;
 public:
+    PhoenixDownII();
     virtual bool canUse(BaseKnight* knight) override;
     virtual void use(BaseKnight* knight) override;
 };
 
 class PhoenixDownIII : public BaseItem
 {
-protected:
-    ItemType itemType = PHOENIX_3;
 public:
+    PhoenixDownIII();
     virtual bool canUse(BaseKnight* knight) override;
     virtual void use(BaseKnight* knight) override;
 };
 
 class PhoenixDownIV : public BaseItem
-{
-protected:
-    ItemType itemType = PHOENIX_4;
+{;
 public:
+    PhoenixDownIV();
     virtual bool canUse(BaseKnight* knight) override;
     virtual void use(BaseKnight* knight) override;
 };
