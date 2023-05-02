@@ -78,7 +78,10 @@ struct BagNode
 class BaseBag {
 private:
     int countItem;
-    void deleteItem(BaseItem* item);
+    void deleteItemFromHead();
+    void deleteFirstSpecificItem(ItemType _itemType);
+    BagNode* getBagNode(ItemType itemType);
+    void swapBagNode(BagNode* firstBagNode, BagNode* secondBagNode);
 protected:
     BaseKnight* knight;
     BagNode* head;

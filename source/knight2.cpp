@@ -1,4 +1,14 @@
 #include "knight2.h"
+
+/* * * BagNode * * */
+
+BagNode::BagNode(BaseItem* _item = nullptr, BagNode* _nextPtr = nullptr) : item(_item), nextPtr(_nextPtr)
+{
+
+}
+
+/* * * BagNode * * */
+
 /* * * BaseBag * * */
 
 BaseBag::BaseBag(BaseKnight* _knight)
@@ -33,17 +43,68 @@ int BaseBag::getCount()
 
 BaseItem* BaseBag::get(ItemType _itemType)
 {
+    return getBagNode(_itemType)->item;
+}
+
+void BaseBag::deleteItemFromHead()
+{
+    if (head == nullptr)
+    {
+        return;
+    }
+    if (head == tail)
+    {
+        delete head;
+        head = nullptr;
+        tail = nullptr;
+    }
+    else
+    {
+        BagNode* tmpBagNode = head;
+        head = head->nextPtr;
+        delete tmpBagNode;
+    }
+}
+
+void BaseBag::deleteFirstSpecificItem(ItemType _itemType)
+{
+    BagNode* deleteBagNode = getBagNode(_itemType);
+    if (deleteBagNode == nullptr || head == nullptr)
+    {
+        return;
+    }
+    else
+    {
+        swapBagNode(head, deleteBagNode);
+        deleteItemFromHead();
+    }
+}
+
+BagNode* BaseBag::getBagNode(ItemType _itemType)
+{
+    if (head == nullptr)
+    {
+        return nullptr;
+    }
     BagNode* findItem = head;
     while (findItem->item->getType() != _itemType)
     {
         findItem = findItem->nextPtr;
+        if (findItem->nextPtr == nullptr)
+        {
+            return nullptr;
+        }
+        findItem = findItem->nextPtr;
     }
-    return findItem->item;
+    return findItem;
 }
 
-void BaseBag::deleteItem(BaseItem* _item)
+void BaseBag::swapBagNode(BagNode* _firstBagNode, BagNode* _secondBagNode)
 {
-
+    BaseItem *temp = nullptr;
+    temp = _firstBagNode->item;
+    _firstBagNode->item = _secondBagNode->item;
+    _secondBagNode->item = temp;
 }
 
 string BaseBag::toString() const
@@ -514,7 +575,6 @@ void PhoenixDownIII::use(BaseKnight* _knight)
 
 /* * * PhoenixDownIV * * */
 
-
 bool PhoenixDownIV::canUse(BaseKnight* _knight)
 {
     return false;
@@ -525,11 +585,6 @@ void PhoenixDownIV::use(BaseKnight* _knight)
 }
 
 /* * * PhoenixDownIV * * */
-
-BagNode::BagNode(BaseItem* _item = nullptr, BagNode* _nextPtr = nullptr) : item(_item), nextPtr(_nextPtr)
-{
-
-}
 
 /* * * Math * * */
 
