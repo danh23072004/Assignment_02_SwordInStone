@@ -12,8 +12,9 @@ BagNode::BagNode(BaseItem* _item = nullptr, BagNode* _nextPtr = nullptr) : item(
 /* * * BaseBag * * */
 
 BaseBag::BaseBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote) : 
-    countItem(0), knight(_knight), head(nullptr), tail(nullptr)
+    bagType(UNKNOWN_SIZE), countItem(0), knight(_knight), head(nullptr), tail(nullptr)
 {
+
     if (_countPhoenixDownI + _countAntidote > 0)
     {
         for (int i = 0; i < _countPhoenixDownI; i++)
@@ -119,6 +120,12 @@ void BaseBag::swapBagNode(BagNode* _firstBagNode, BagNode* _secondBagNode)
     temp = _firstBagNode->item;
     _firstBagNode->item = _secondBagNode->item;
     _secondBagNode->item = temp;
+}
+
+int BaseBag::getBagSize()
+{
+    KnightType bagType = 
+    return 0;
 }
 
 string BaseBag::toString() const
@@ -229,6 +236,10 @@ BaseKnight::BaseKnight() : id(0), hp(0), maxhp(0), level(0), gil(0), bag(nullptr
 {
 }
 
+BaseKnight::~BaseKnight()
+{
+}
+
 int BaseKnight::getGil() const
 {
     return gil;
@@ -325,9 +336,19 @@ NormalKnight::NormalKnight()
 
 /* * * Events * * */
 
-Events::Events()
+Events::Events(const string& _file_events)
 {
-
+    ifstream file;
+    file.open(_file_events);
+    file >> countEvent;
+    for (int i = 0; i < countEvent; i++)
+    {
+        file >> eventList[i];
+    }
+    for (int i = 0; i < countEvent; i++)
+    {
+        cout << eventList[i] << ' ';
+    }
 }
 
 Events::~Events()
@@ -441,7 +462,7 @@ void KnightAdventure::loadArmyKnights(const string& _file_armyknights)
 
 void KnightAdventure::loadEvents(const string& _file_events)
 {
-
+    events = new Events(_file_events);
 }
 
 void KnightAdventure::run()
@@ -461,39 +482,6 @@ KnightAdventure::~KnightAdventure()
 BaseItem::BaseItem()
 {
     itemType = UNKNOWN_ITEM;
-}
-
-BaseItem* BaseItem::setItem(ItemType _type)
-{
-    BaseItem* newItem;
-    switch (_type)
-    {
-    case ANTIDOTE:
-        newItem = new Antidote();
-        newItem->itemType = _type;
-        break;
-    case PHOENIX_1:
-        newItem = new Antidote();
-        newItem->itemType = _type;
-        break;
-    case PHOENIX_2:
-        newItem = new Antidote();
-        newItem->itemType = _type;
-        break;
-    case PHOENIX_3:
-        newItem = new Antidote();
-        newItem->itemType = _type;
-        break;
-    case PHOENIX_4:
-        newItem = new Antidote();
-        newItem->itemType = _type;
-        break;
-    default:
-        newItem = new Antidote();
-        newItem->itemType = _type;
-        break;
-    }
-    return newItem;
 }
 
 ItemType BaseItem::getType()
@@ -544,7 +532,7 @@ void Antidote::use(BaseKnight* knight)
 {
 }
 
-Antidote::Antidote()
+Antidote::Antidote() : BaseItem()
 {
     itemType = ANTIDOTE;
 }
@@ -555,7 +543,7 @@ Antidote::Antidote()
 
 /* * * PhoenixDownI * * */
 
-PhoenixDownI::PhoenixDownI()
+PhoenixDownI::PhoenixDownI() : BaseItem()
 {
     itemType = PHOENIX_1;
 }
@@ -573,7 +561,7 @@ void PhoenixDownI::use(BaseKnight* _knight)
 
 /* * * PhoenixDownII * * */
 
-PhoenixDownII::PhoenixDownII()
+PhoenixDownII::PhoenixDownII() : BaseItem()
 {
     itemType = PHOENIX_2;
 }
@@ -591,7 +579,7 @@ void PhoenixDownII::use(BaseKnight* _knight)
 
 /* * * PhoenixDownIII * * */
 
-PhoenixDownIII::PhoenixDownIII()
+PhoenixDownIII::PhoenixDownIII() : BaseItem()
 {
     itemType = PHOENIX_3;
 }
@@ -609,7 +597,7 @@ void PhoenixDownIII::use(BaseKnight* _knight)
 
 /* * * PhoenixDownIV * * */
 
-PhoenixDownIV::PhoenixDownIV()
+PhoenixDownIV::PhoenixDownIV() : BaseItem()
 {
     itemType = PHOENIX_4;
 }
@@ -653,3 +641,25 @@ bool Math::isPythagoras(int _number)
 }
 
 /* * * Math * * */
+
+PaladinBag::PaladinBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote) :
+    BaseBag( _knight, _countPhoenixDownI, _countAntidote)
+{
+
+}
+
+LancelotBag::LancelotBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote) :
+    BaseBag(_knight, _countPhoenixDownI, _countAntidote)
+{
+
+}
+
+DragonBag::DragonBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote) :
+    BaseBag(_knight, _countPhoenixDownI, _countAntidote)
+{
+}
+
+NormalBag::NormalBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote) :
+    BaseBag(_knight, _countPhoenixDownI, _countAntidote)
+{
+}

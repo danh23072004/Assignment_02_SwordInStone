@@ -5,8 +5,31 @@
 
 // #define DEBUG
 
-enum KnightType { UNKNOWN_KNIGHT = -1, PALADIN = 0, LANCELOT = 1, DRAGON = 2, NORMAL = 3 };
-enum ItemType { UNKNOWN_ITEM = -1, ANTIDOTE = 0, PHOENIX_1 = 1, PHOENIX_2 = 2, PHOENIX_3 = 3, PHOENIX_4 = 4};
+enum KnightType 
+{ 
+    UNKNOWN_KNIGHT = -1, 
+    PALADIN = 0, 
+    LANCELOT = 1, 
+    DRAGON = 2, 
+    NORMAL = 3 
+};
+enum ItemType 
+{ 
+    UNKNOWN_ITEM = -1, 
+    ANTIDOTE = 0, 
+    PHOENIX_1 = 1, 
+    PHOENIX_2 = 2, 
+    PHOENIX_3 = 3, 
+    PHOENIX_4 = 4
+};
+enum BagType
+{
+    UNKNOWN_SIZE = -1,
+    PALADIN_SIZE = 0,
+    LANCELOT_SIZE = 1,
+    DRAGON_SIZE = 2,
+    NORMAL_SIZE = 3
+};
 
 class BaseKnight; // forward declaration for BaseKnight
 
@@ -17,7 +40,6 @@ public:
     BaseItem();
     virtual bool canUse(BaseKnight* knight) = 0;
     virtual void use(BaseKnight* knight) = 0;
-    static BaseItem* setItem(ItemType);
     ItemType getType();
     string typeToString();
 };
@@ -71,12 +93,15 @@ struct BagNode
 
 class BaseBag {
 private:
+    BagType bagType;
     int countItem;
     void deleteItemFromHead();
     void deleteFirstSpecificItem(ItemType _itemType);
     BagNode* getBagNode(ItemType itemType);
     void swapBagNode(BagNode* firstBagNode, BagNode* secondBagNode);
+
 protected:
+    int getBagSize();
     BaseKnight* knight;
     BagNode* head;
     BagNode* tail;
@@ -87,6 +112,30 @@ public:
     bool isEmpty();
     virtual BaseItem* get(ItemType itemType);
     virtual string toString() const;
+};
+
+class PaladinBag : BaseBag
+{
+public:
+    PaladinBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote);
+};
+
+class LancelotBag : BaseBag
+{
+public:
+    LancelotBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote);
+};
+
+class DragonBag : BaseBag
+{
+public:
+    DragonBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote);
+};
+
+class NormalBag : BaseBag
+{
+public:
+    NormalBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote);
 };
 
 class BaseKnight {
@@ -104,6 +153,7 @@ protected:
     KnightType knightType;
 public:
     BaseKnight();
+    ~BaseKnight();
     static BaseKnight* create(int id, int maxhp, int level, int gil, int antidote, int phoenixdownI);
     int getID() const;
     int getHP() const;
@@ -181,11 +231,12 @@ class TornBery : public BaseOpponent
 
 class Events {
 private:
+    int countEvent;
     int eventList[1000] = {};
 public:
     int count() const;
     int get(int i) const;
-    Events();
+    Events(const string& file_events);
     ~Events();
 };
 
