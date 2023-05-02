@@ -18,13 +18,13 @@ BaseBag::BaseBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote
     {
         for (int i = 0; i < _countPhoenixDownI; i++)
         {
-            PhoenixDownI phoenixDown1;
-            insertFirst(&phoenixDown1);
+            PhoenixDownI *phoenixDown1 = new PhoenixDownI();
+            insertFirst(phoenixDown1);
         }
         for (int i = 0; i < _countAntidote; i++)
         {
-            Antidote antidote;
-            insertFirst(&antidote);
+            Antidote *antidote = new Antidote();
+            insertFirst(antidote);
         }
     }
 }
@@ -130,9 +130,10 @@ string BaseBag::toString() const
     }
     else
     {
-        while (iterateNode->item != nullptr)
+        while (iterateNode != nullptr)
         {
             list_item = list_item + iterateNode->item->typeToString() + ',';
+            iterateNode = iterateNode->nextPtr;
         }
         list_item.erase(list_item.length() - 1, 1);
     }
@@ -173,21 +174,27 @@ BaseKnight* BaseKnight::create(int _id, int _maxhp, int _level, int _gil, int _a
     new_knight->level = _level;
     new_knight->gil = _gil;
     new_knight->bag = new BaseBag(new_knight, _phoenixdownI, _antidote);
+    /*cout << new_knight->bag << endl;*/
 
     return new_knight;
 }
 
-int BaseKnight::getID()
+int BaseKnight::getID() const
 {
     return id;
 }
 
-int BaseKnight::getHP()
+int BaseKnight::getHP() const
+{
+    return hp;
+}
+
+int BaseKnight::getMaxHP() const
 {
     return maxhp;
 }
 
-int BaseKnight::getLevel()
+int BaseKnight::getLevel() const
 {
     return level;
 }
@@ -218,15 +225,14 @@ bool BaseKnight::isDragonKnight(int _maxHP)
 
 BaseKnight::BaseKnight() : id(0), hp(0), maxhp(0), level(0), gil(0), bag(nullptr), knightType(NORMAL)
 {
-    /*bag = new BaseBag(this);*/
 }
 
-int BaseKnight::getGil()
+int BaseKnight::getGil() const
 {
     return gil;
 }
 
-BaseBag* BaseKnight::getBag()
+BaseBag* BaseKnight::getBag() const
 {
     return bag;
 }
@@ -261,8 +267,8 @@ string BaseKnight::toString() const {
     // inefficient version, students can change these code
     //      but the format output must be the same
     string s("");
-    s += "[Knight:id:" + to_string(id) 
-        + ",hp:" + to_string(hp) 
+    s += "[Knight:id:" + to_string(id)
+        + ",hp:" + to_string(hp)
         + ",maxhp:" + to_string(maxhp)
         + ",level:" + to_string(level)
         + ",gil:" + to_string(gil)
@@ -339,7 +345,8 @@ int Events::get(int eventIndex) const
 /* * * Events * * */
 
 /* * * ArmyKnights * * */
-ArmyKnights::ArmyKnights(const string& _file_armyknights)
+ArmyKnights::ArmyKnights(const string& _file_armyknights) :
+    isPaladinShield(false), isLancelotSpear(false), isGuinevereHair(false), isExcaliburSword(false)
 {
     ifstream file;
     file.open(_file_armyknights);
@@ -351,9 +358,6 @@ ArmyKnights::ArmyKnights(const string& _file_armyknights)
         file >> HP >> level >> phoenixdownI >> gil >> antidote;
         listOfKnights[i] = BaseKnight::create(i, HP, level, gil, antidote, phoenixdownI);
         cout << listOfKnights[i]->toString() << endl;
-        cout << listOfKnights[i]->getHP() << endl;
-        cout << listOfKnights[i]->getKnightType() << endl;
-        cout << listOfKnights[i]->getBag()->toString();
     }
 }
 
@@ -402,22 +406,22 @@ BaseKnight* ArmyKnights::lastKnight() const
 
 bool ArmyKnights::hasPaladinShield() const
 {
-    return false;
+    return isPaladinShield;
 }
 
 bool ArmyKnights::hasLancelotSpear() const
 {
-    return false;
+    return isLancelotSpear;
 }
 
 bool ArmyKnights::hasGuinevereHair() const
 {
-    return false;
+    return isGuinevereHair;
 }
 
 bool ArmyKnights::hasExcaliburSword() const
 {
-    return false;
+    return isExcaliburSword;
 }
 
 /* * * ArmyKnights * * */

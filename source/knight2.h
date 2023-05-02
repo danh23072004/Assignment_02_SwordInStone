@@ -105,11 +105,12 @@ protected:
 public:
     BaseKnight();
     static BaseKnight* create(int id, int maxhp, int level, int gil, int antidote, int phoenixdownI);
-    int getID();
-    int getHP();
-    int getLevel();
-	int getGil();
-    BaseBag* getBag();
+    int getID() const;
+    int getHP() const;
+    int getMaxHP() const;
+    int getLevel() const;
+	int getGil() const;
+    BaseBag* getBag() const;
     KnightType getKnightType();
     void setID(int _new_id);
     void setHP(int _new_hp);
@@ -192,6 +193,10 @@ class ArmyKnights {
 private:
     int numOfKnights;
     BaseKnight** listOfKnights; // list of Knights
+    bool isPaladinShield;
+    bool isLancelotSpear;
+    bool isGuinevereHair;
+    bool isExcaliburSword;
 public:
     ArmyKnights(const string & file_armyknights);
     ~ArmyKnights();
