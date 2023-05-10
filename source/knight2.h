@@ -22,14 +22,6 @@ enum ItemType
     PHOENIX_3 = 3, 
     PHOENIX_4 = 4
 };
-enum BagType
-{
-    UNKNOWN_SIZE = -1,
-    PALADIN_SIZE = 0,
-    LANCELOT_SIZE = 1,
-    DRAGON_SIZE = 2,
-    NORMAL_SIZE = 3
-};
 
 class BaseKnight; // forward declaration for BaseKnight
 
@@ -93,15 +85,13 @@ struct BagNode
 
 class BaseBag {
 private:
-    BagType bagType;
     int countItem;
     void deleteItemFromHead();
     void deleteFirstSpecificItem(ItemType _itemType);
     BagNode* getBagNode(ItemType itemType);
     void swapBagNode(BagNode* firstBagNode, BagNode* secondBagNode);
-
 protected:
-    int getBagSize();
+    int getBagCount();
     BaseKnight* knight;
     BagNode* head;
     BagNode* tail;
@@ -110,32 +100,109 @@ public:
     virtual bool insertFirst(BaseItem* item);
     int getCount();
     bool isEmpty();
+    virtual int isOverSize(int numAdd, ItemType item = UNKNOWN_ITEM);
     virtual BaseItem* get(ItemType itemType);
     virtual string toString() const;
 };
 
-class PaladinBag : BaseBag
+class PaladinBag : public BaseBag
 {
 public:
     PaladinBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote);
+    virtual int isOverSize(int numAdd, ItemType item) override;
 };
 
-class LancelotBag : BaseBag
+class LancelotBag : public BaseBag
 {
 public:
     LancelotBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote);
+    virtual int isOverSize(int numAdd, ItemType item) override;
 };
 
-class DragonBag : BaseBag
+class DragonBag : public BaseBag
 {
 public:
     DragonBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote);
+    virtual int isOverSize(int numAdd, ItemType item) override;
 };
 
-class NormalBag : BaseBag
+class NormalBag : public BaseBag
 {
 public:
     NormalBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote);
+    virtual int isOverSize(int numAdd, ItemType item) override;
+};
+
+class BaseOpponent
+{
+    virtual void behave() = 0;
+};
+
+class BasicMonster : public BaseOpponent
+{
+private:
+    void calculateLevelO();
+protected:
+    BasicMonster(int eventOrder, int eventID);
+    int baseDamage;
+    int levelO;
+    int eventOrder;
+    int eventID;
+    int gilReward;
+public:
+    int getLevelO();
+    void dealDamage(BaseKnight* knight);
+    virtual void behave() override final;
+};
+
+class MadBear : public BasicMonster
+{
+public: 
+    MadBear(int eventOrder, int eventID);
+};
+
+class Bandit : public BaseOpponent, public BasicMonster
+{
+};
+
+class LordLupin : public BaseOpponent, public BasicMonster
+{
+
+};
+
+class Elf : public BaseOpponent, public BasicMonster
+{
+
+};
+
+class Troll : public BaseOpponent, public BasicMonster
+{
+
+};
+
+class TornBery : public BaseOpponent
+{
+
+};
+
+class QueenOfCards : public BaseOpponent
+{
+};
+
+class NinaDeRings : public BaseOpponent
+{
+};
+
+class DurianGarden : public BaseOpponent
+{
+};
+
+class OmegaWeapon : public BaseOpponent
+{
+};
+
+class Hades : public BaseOpponent
+{
 };
 
 class BaseKnight {
@@ -162,12 +229,13 @@ public:
 	int getGil() const;
     BaseBag* getBag() const;
     KnightType getKnightType();
-    void setID(int _new_id);
-    void setHP(int _new_hp);
-    void setLevel(int _new_level);
-    void setGil(int _new_gil);
+    void setID(int new_id);
+    void setHP(int new_hp);
+    void setLevel(int new_level);
+    void setGil(int new_gil);
+
     string toString() const;
-    bool fight();
+    bool fight(BaseOpponent* opponent);
 };
 
 class PaladinKnight : public BaseKnight
@@ -194,48 +262,33 @@ public:
     NormalKnight();
 };
 
-class BaseOpponent
-{
-
-};
-
-class MadBear : public BaseOpponent
-{
-
-};
-
-class Bandit : public BaseOpponent
-{
-
-};
-
-class LordLupin : public BaseOpponent
-{
-
-};
-
-class Elf : public BaseOpponent
-{
-
-};
-
-class Troll : public BaseOpponent
-{
-
-};
-
-class TornBery : public BaseOpponent
-{
-
-};
+class ArmyKnights;
 
 class Events {
 private:
+    ArmyKnights* armyKnights;
     int countEvent;
     int eventList[1000] = {};
+    bool isMetOmegaWeapon;
+    bool isMetHades;
 public:
+    ArmyKnights* getArmyKnights();
+    void setArmyKnights(ArmyKnights* _armyKnights);
     int count() const;
     int get(int i) const;
+    void runEvent(int eventID);
+    void eventBasicOpponent();
+    void eventTornberry();
+    void eventQueenOfCards();
+    void eventDurianGarden();
+    void eventOmegaWeapon();
+    void eventHades();
+    void eventGetPhoenixDown();
+    void eventGetAntidote();
+    void eventGetExcaliburSword();
+    void eventGetGuinevereHair();
+    void eventGetLancelotSpear();
+    void eventGetPaladinShield();
     Events(const string& file_events);
     ~Events();
 };

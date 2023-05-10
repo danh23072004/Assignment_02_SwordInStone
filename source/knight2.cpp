@@ -4,7 +4,6 @@
 
 BagNode::BagNode(BaseItem* _item = nullptr, BagNode* _nextPtr = nullptr) : item(_item), nextPtr(_nextPtr)
 {
-
 }
 
 /* * * BagNode * * */
@@ -12,22 +11,50 @@ BagNode::BagNode(BaseItem* _item = nullptr, BagNode* _nextPtr = nullptr) : item(
 /* * * BaseBag * * */
 
 BaseBag::BaseBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote) : 
-    bagType(UNKNOWN_SIZE), countItem(0), knight(_knight), head(nullptr), tail(nullptr)
+    countItem(0), knight(_knight), head(nullptr), tail(nullptr)
 {
-
-    if (_countPhoenixDownI + _countAntidote > 0)
+    int maxSize = 0;
+    switch (knight->getKnightType())
+    {
+        case DRAGON:
+			maxSize = 14;
+			break;
+        case LANCELOT:
+            maxSize = 16;
+            break;
+        case NORMAL:
+            maxSize = 19;
+            break;
+        default:
+            // maxSize = 0 means this knight is PALADIN
+            break;
+    }
+    // These lines below are to make sure the number of items in the bag is not over the maximum size
+    if (_countPhoenixDownI > maxSize)
+    {
+		_countPhoenixDownI = maxSize;
+	}
+    if (_countPhoenixDownI > 0 && (_countPhoenixDownI < maxSize || maxSize == 0))
     {
         for (int i = 0; i < _countPhoenixDownI; i++)
         {
             PhoenixDownI *phoenixDown1 = new PhoenixDownI();
             insertFirst(phoenixDown1);
         }
+    }
+    maxSize = maxSize - _countPhoenixDownI;
+    if (_countAntidote > maxSize)
+    {
+        _countAntidote = maxSize;
+    }
+    if (_countAntidote > 0 || maxSize == 0)
+    {
         for (int i = 0; i < _countAntidote; i++)
         {
-            Antidote *antidote = new Antidote();
-            insertFirst(antidote);
-        }
-    }
+			Antidote *antidote = new Antidote();
+			insertFirst(antidote);
+		}
+	}
 }
 
 bool BaseBag::insertFirst(BaseItem* _new_item)
@@ -122,10 +149,9 @@ void BaseBag::swapBagNode(BagNode* _firstBagNode, BagNode* _secondBagNode)
     _secondBagNode->item = temp;
 }
 
-int BaseBag::getBagSize()
+int BaseBag::getBagCount()
 {
-    KnightType bagType = 
-    return 0;
+    return countItem;
 }
 
 string BaseBag::toString() const
@@ -161,6 +187,11 @@ bool BaseBag::isEmpty()
     }
 }
 
+int BaseBag::isOverSize(int numAdd, ItemType item)
+{
+    return 0;
+}
+
 /* * * BaseBag * * */
 
 /* * * BaseKnight * * */
@@ -169,20 +200,30 @@ BaseKnight* BaseKnight::create(int _id, int _maxhp, int _level, int _gil, int _a
 {   
     BaseKnight* new_knight;
     if (isPaladinKnight(_maxhp))
+    {
         new_knight = new PaladinKnight();
+        new_knight->bag = new PaladinBag(new_knight, _phoenixdownI, _antidote);
+    }
     else if (isLancelotKnight(_maxhp))
+    {
         new_knight = new LancelotKnight();
+        new_knight->bag = new LancelotBag(new_knight, _phoenixdownI, _antidote);
+    }
     else if (isDragonKnight(_maxhp))
+    {
         new_knight = new DragonKnight();
+        new_knight->bag = new DragonBag(new_knight, _phoenixdownI, _antidote);
+    }
     else
+    {
         new_knight = new NormalKnight();
-
+        new_knight->bag = new NormalBag(new_knight, _phoenixdownI, _antidote);
+    }
     new_knight->id = _id;
     new_knight->maxhp = _maxhp;
     new_knight->hp = _maxhp;
     new_knight->level = _level;
     new_knight->gil = _gil;
-    new_knight->bag = new BaseBag(new_knight, _phoenixdownI, _antidote);
     /*cout << new_knight->bag << endl;*/
 
     return new_knight;
@@ -291,10 +332,12 @@ string BaseKnight::toString() const {
     return s;
 }
 
-bool BaseKnight::fight()
+bool BaseKnight::fight(BaseOpponent* opponent)
 {
-    return false;
+
 }
+
+
 
 /* * * BaseKnight * * */
 
@@ -345,14 +388,24 @@ Events::Events(const string& _file_events)
     {
         file >> eventList[i];
     }
-    for (int i = 0; i < countEvent; i++)
-    {
-        cout << eventList[i] << ' ';
-    }
+    isMetOmegaWeapon = false;
+    isMetHades = false;
+    armyKnights = nullptr;
 }
 
 Events::~Events()
 {
+}
+
+
+ArmyKnights* Events::getArmyKnights()
+{
+    return armyKnights;
+}
+
+void Events::setArmyKnights(ArmyKnights* _armyKnights)
+{
+	armyKnights = _armyKnights;
 }
 
 int Events::count() const
@@ -362,7 +415,25 @@ int Events::count() const
 
 int Events::get(int eventIndex) const
 {
-    return 0;
+    return eventList[eventIndex];
+}
+
+void Events::runEvent(int _eventID)
+{
+    // Write code create opponent based on each type of _event_i
+
+
+    //if (1 <= event_i <= 5)
+    //else if (event_i == 6)
+    //else if (event_i == 7)
+    //else if (event_i == 8)
+    //else if (event_i == 9)
+    //else if (event_i == 10 && isMetOmegaWeapon == false)
+    //else if (event_i == 11 && isMetHades == false)
+    //else if (event_i >= 112 && event_i <= 114)
+    //else if (event_i >= 95 && event_i <= 97)
+    //else if (event_i == 98)
+    //else if (event_i == 99)
 }
 
 /* * * Events * * */
@@ -379,8 +450,7 @@ ArmyKnights::ArmyKnights(const string& _file_armyknights) :
     for (int i = 0; i < numOfKnights; i++)
     {
         file >> HP >> level >> phoenixdownI >> gil >> antidote;
-        listOfKnights[i] = BaseKnight::create(i, HP, level, gil, antidote, phoenixdownI);
-        cout << listOfKnights[i]->toString() << endl;
+        listOfKnights[i] = BaseKnight::create(i + 1, HP, level, gil, antidote, phoenixdownI);
     }
 }
 
@@ -467,7 +537,10 @@ void KnightAdventure::loadEvents(const string& _file_events)
 
 void KnightAdventure::run()
 {
+    for (int i = 0; i < events->count(); i++)
+    {
 
+    }
 }
 
 KnightAdventure::~KnightAdventure()
@@ -645,13 +718,29 @@ bool Math::isPythagoras(int _number)
 PaladinBag::PaladinBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote) :
     BaseBag( _knight, _countPhoenixDownI, _countAntidote)
 {
+}
 
+int PaladinBag::isOverSize(int _numAdd, ItemType _item)
+{
+    return 0;
 }
 
 LancelotBag::LancelotBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote) :
     BaseBag(_knight, _countPhoenixDownI, _countAntidote)
 {
+}
 
+int LancelotBag::isOverSize(int _numAdd, ItemType _item)
+{
+    int count = getCount();
+    if (count + _numAdd > 16)
+    {
+        return count + _numAdd - 16;
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 DragonBag::DragonBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote) :
@@ -659,7 +748,63 @@ DragonBag::DragonBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAnti
 {
 }
 
+int DragonBag::isOverSize(int _numAdd, ItemType _item)
+{
+    int count = getCount();
+    if (count + _numAdd > 14 || _item == ANTIDOTE)
+    {
+        return count + _numAdd - 14;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
 NormalBag::NormalBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote) :
     BaseBag(_knight, _countPhoenixDownI, _countAntidote)
 {
+}
+
+int NormalBag::isOverSize(int _numAdd, ItemType _item)
+{
+    int count = getCount();
+    if (count + _numAdd > 19)
+    {
+        return count + _numAdd - 19;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+/* * * BasicMonster * * */
+
+void BasicMonster::calculateLevelO()
+{
+    levelO = (eventOrder + eventID) % 10 + 1;
+}
+
+BasicMonster::BasicMonster(int _eventOrder, int _eventID) : baseDamage(0), gilReward(0)
+{
+    calculateLevelO();
+}
+
+int BasicMonster::getLevelO()
+{
+    return levelO;
+}
+
+void BasicMonster::dealDamage(BaseKnight* knight)
+{
+
+}
+
+/* * * BasicMonster * * */
+
+MadBear::MadBear(int eventOrder, int eventID) : BasicMonster(eventOrder, eventID)
+{
+	baseDamage = 10;
+	gilReward = 100;
 }
