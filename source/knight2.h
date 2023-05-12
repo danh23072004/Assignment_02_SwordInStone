@@ -46,6 +46,7 @@ public:
     virtual void use(BaseKnight* knight) = 0;
     ItemType getType();
     string typeToString();
+    static BaseItem* createItem(ItemType itemType);
 };
 
 class Antidote : public BaseItem
@@ -99,8 +100,7 @@ class BaseBag {
 private:
     int countItem;
     void deleteItemFromHead();
-    void deleteFirstSpecificItem(ItemType _itemType);
-    BagNode* getBagNode(ItemType itemType);
+    BagNode* findItem(ItemType itemType);
     void swapBagNode(BagNode* firstBagNode, BagNode* secondBagNode);
 protected:
     int getBagCount();
@@ -112,8 +112,11 @@ public:
     virtual bool insertFirst(BaseItem* item);
     int getCount();
     bool isEmpty();
-    virtual int isOverSize(int numAdd, ItemType item = UNKNOWN_ITEM);
+    bool deleteFirstSpecificItem(ItemType _itemType);
+    virtual bool isOverSize(int numAdd, ItemType item = UNKNOWN_ITEM);
     virtual BaseItem* get(ItemType itemType);
+    BaseItem* getFirst();
+    void dropItem();
     virtual string toString() const;
 };
 
@@ -121,28 +124,28 @@ class PaladinBag : public BaseBag
 {
 public:
     PaladinBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote);
-    virtual int isOverSize(int numAdd, ItemType item) override;
+    virtual bool isOverSize(int numAdd, ItemType item) override;
 };
 
 class LancelotBag : public BaseBag
 {
 public:
     LancelotBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote);
-    virtual int isOverSize(int numAdd, ItemType item) override;
+    virtual bool isOverSize(int numAdd, ItemType item) override;
 };
 
 class DragonBag : public BaseBag
 {
 public:
     DragonBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote);
-    virtual int isOverSize(int numAdd, ItemType item) override;
+    virtual bool isOverSize(int numAdd, ItemType item) override;
 };
 
 class NormalBag : public BaseBag
 {
 public:
     NormalBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote);
-    virtual int isOverSize(int numAdd, ItemType item) override;
+    virtual bool isOverSize(int numAdd, ItemType item) override;
 };
 
 class BaseOpponent
@@ -166,7 +169,12 @@ public:
 class Ultimecia
 {
 private:
+    int hp;
 public:
+    Ultimecia();
+	void reduceHP(int _hp);
+	int getHP();
+    void killKnight(BaseKnight* knight);
 };
 
 class BaseMonster : public BaseOpponent
@@ -209,6 +217,8 @@ public:
 
 class TornBery : public BaseOpponent
 {
+private:
+    void infect(BaseKnight* knight);
 public:
     TornBery(int eventOrder, int eventID);
     virtual void behave(ArmyKnights* armyKnights, bool knightWinState) override;
@@ -222,18 +232,26 @@ class QueenOfCards : public BaseOpponent
 
 class NinaDeRings : public BaseOpponent
 {
+    NinaDeRings();
+    virtual void behave(ArmyKnights* armyKnights, bool knightWinState) override;
 };
 
 class DurianGarden : public BaseOpponent
 {
+    DurianGarden();
+	virtual void behave(ArmyKnights* armyKnights, bool knightWinState) override;
 };
 
 class OmegaWeapon : public BaseOpponent
 {
+    OmegaWeapon();
+    virtual void behave(ArmyKnights* armyKnights, bool knightWinState) override;
 };
 
 class Hades : public BaseOpponent
 {
+    Hades();
+    virtual void behave(ArmyKnights* armyKnights, bool knightWinState) override;
 };
 
 class BaseKnight {
@@ -248,10 +266,12 @@ protected:
     int hp;
     int level;
     int gil;
+    bool canFightUltimecia;
     BaseBag* bag;
     KnightType knightType;
     bool isWonHades();
     bool isWonOmegaWeapon();
+    bool isCanFightUltimecia();
 public:
     BaseKnight();
     ~BaseKnight();
@@ -267,11 +287,12 @@ public:
     void setID(int new_id);
     void setHP(int new_hp);
     void reduceHP(int new_reducehp);
+    void addHP(int new_addhp);
     void setLevel(int new_level);
     void addLevel();
     void setGil(int new_gil);
-    void useMedicine(ItemType itemType);
-    virtual void becomeInfect();
+    bool useAntidote();
+    void usePhoenixDown();
 
     string toString() const;
     virtual bool fight(BaseOpponent* opponent);
@@ -284,6 +305,7 @@ private:
 public:
     PaladinKnight();
     virtual bool fight(BaseOpponent* opponent) override;
+    bool fightUltimecia(Ultimecia* ultimecia);
 };
 
 class LancelotKnight : public BaseKnight
@@ -293,6 +315,7 @@ private:
 public:
     LancelotKnight();
     virtual bool fight(BaseOpponent* opponent) override;
+    bool fightUltimecia(Ultimecia* ultimecia);
 };
 
 class DragonKnight : public BaseKnight
@@ -302,6 +325,7 @@ private:
 public:
     DragonKnight();
     virtual bool fight(BaseOpponent* opponent) override;
+    bool fightUltimecia(Ultimecia* ultimecia);
 };
 
 class NormalKnight : public BaseKnight
@@ -310,8 +334,6 @@ public:
     NormalKnight();
     virtual bool fight(BaseOpponent* opponent) override;
 };
-
-class ArmyKnights;
 
 class Events {
 private:
@@ -370,6 +392,10 @@ public:
     bool hasLancelotSpear() const;
     bool hasGuinevereHair() const;
     bool hasExcaliburSword() const;
+    void setPaladinShield(bool status);
+    void setLancelotSpear(bool status);
+    void setGuinevereHair(bool status);
+    void setExcaliburSword(bool status);
 
     void printInfo() const;
     void printResult(bool win) const;

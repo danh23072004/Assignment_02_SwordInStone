@@ -82,10 +82,27 @@ int BaseBag::getCount()
 }
 
 
-// Definition of these two virtual methods can be changed or override in the future
+// Get the first item has the same _itemType, return nullptr if not found
 BaseItem* BaseBag::get(ItemType _itemType)
 {
-    return getBagNode(_itemType)->item;
+    return findItem(_itemType)->item;
+}
+
+BaseItem* BaseBag::getFirst()
+{
+    if (head == nullptr)
+    {
+		return nullptr;
+	}
+    else
+    {
+		return head->item;
+	}
+}
+
+void BaseBag::dropItem()
+{
+    deleteItemFromHead();
 }
 
 void BaseBag::deleteItemFromHead()
@@ -108,21 +125,23 @@ void BaseBag::deleteItemFromHead()
     }
 }
 
-void BaseBag::deleteFirstSpecificItem(ItemType _itemType)
+// return true if delete sucessfully, false if not
+bool BaseBag::deleteFirstSpecificItem(ItemType _itemType)
 {
-    BagNode* deleteBagNode = getBagNode(_itemType);
+    BagNode* deleteBagNode = findItem(_itemType);
     if (deleteBagNode == nullptr || head == nullptr)
     {
-        return;
+        return false;
     }
     else
     {
         swapBagNode(head, deleteBagNode);
         deleteItemFromHead();
+        return true;
     }
 }
 
-BagNode* BaseBag::getBagNode(ItemType _itemType)
+BagNode* BaseBag::findItem(ItemType _itemType)
 {
     if (head == nullptr)
     {
@@ -187,9 +206,40 @@ bool BaseBag::isEmpty()
     }
 }
 
-int BaseBag::isOverSize(int numAdd, ItemType item)
+bool BaseBag::isOverSize(int numAdd, ItemType item)
 {
-    return 0;
+    int maxSize = 0;
+    if (knight->getKnightType() == PALADIN)
+    {
+        return false; // means PALADIN knight bag is unlimited
+    }
+    if (knight->getKnightType() == DRAGON && item == ANTIDOTE)
+    {
+        return true; // means DRAGON knight bag doesn't need ANTIDOTE
+    }
+    switch (knight->getKnightType())
+    {
+		case DRAGON:
+			maxSize = 14;
+			break;
+		case LANCELOT:
+			maxSize = 16;
+			break;
+		case NORMAL:
+			maxSize = 19;
+			break;
+		default:
+			break;
+	}
+    if (countItem + numAdd > maxSize)
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+
 }
 
 /* * * BaseBag * * */
@@ -297,7 +347,7 @@ bool BaseKnight::isWonOmegaWeapon()
     }
 }
 
-BaseKnight::BaseKnight() : id(0), hp(0), maxhp(0), level(0), gil(0), bag(nullptr), knightType(NORMAL)
+BaseKnight::BaseKnight() : id(0), hp(0), maxhp(0), level(0), gil(0), bag(nullptr), knightType(NORMAL), canFightUltimecia(false)
 {
 }
 
@@ -312,14 +362,21 @@ int BaseKnight::getGil() const
 
 void ArmyKnights::addGil(int _numOfGill)
 {
-    //if (gil + _numOfGill < 999)
-    //{
-    //    gil += _numOfGill;
-    //}
-    //else
-    //{
-    //    gil = 999;
-    //}
+    int currentKnight = numOfKnights;
+    while (_numOfGill > 0 && currentKnight >= 0)
+    {
+        if (listOfKnights[currentKnight]->getGil() + _numOfGill > 999)
+        {
+            _numOfGill -= 999 - listOfKnights[currentKnight]->getGil();
+            listOfKnights[currentKnight]->setGil(999);
+            currentKnight--;
+        }
+        else
+        {
+            listOfKnights[currentKnight]->setGil(listOfKnights[currentKnight]->getGil() + _numOfGill);
+            break;
+        }
+    }
 }
 
 BaseBag* BaseKnight::getBag() const
@@ -354,6 +411,18 @@ void BaseKnight::reduceHP(int new_reducehp)
     }
 }
 
+void BaseKnight::addHP(int new_addhp)
+{
+    if (hp + new_addhp < maxhp)
+    {
+		hp += new_addhp;
+	}
+    else
+    {
+		hp = maxhp;
+	}
+}
+
 void BaseKnight::setLevel(int _new_level)
 {
     level = _new_level;
@@ -372,9 +441,19 @@ void BaseKnight::setGil(int _new_gil)
     gil = _new_gil;
 }
 
-void BaseKnight::becomeInfect()
+bool BaseKnight::useAntidote()
+{
+    return bag->deleteFirstSpecificItem(ANTIDOTE);
+}
+
+void BaseKnight::usePhoenixDown()
 {
 
+}
+
+bool BaseKnight::isCanFightUltimecia()
+{
+    return canFightUltimecia;
 }
 
 string BaseKnight::toString() const {
@@ -415,6 +494,7 @@ bool BaseKnight::fight(BaseOpponent* opponent)
 PaladinKnight::PaladinKnight()
 {
     knightType = PALADIN;
+    canFightUltimecia = true;
 }
 
 bool PaladinKnight::fight(BaseOpponent* opponent)
@@ -441,6 +521,21 @@ bool PaladinKnight::fight(BaseOpponent* opponent)
     return result;
 }
 
+bool PaladinKnight::fightUltimecia(Ultimecia* ultimecia)
+{
+    int damage = int(hp * level * baseDamage);
+    ultimecia->reduceHP(damage);
+    if (ultimecia->getHP() == 0)
+    {
+        return true;
+    }
+    else
+    {
+        ultimecia->killKnight(this);
+        return false;
+    }
+}
+
 /* * * PaladinKnight * * */
 
 /* * * LancelotKnight * * */
@@ -448,6 +543,7 @@ bool PaladinKnight::fight(BaseOpponent* opponent)
 LancelotKnight::LancelotKnight()
 {
     knightType = LANCELOT;
+    canFightUltimecia = true;
 }
 
 bool LancelotKnight::fight(BaseOpponent* opponent)
@@ -472,6 +568,21 @@ bool LancelotKnight::fight(BaseOpponent* opponent)
     return result;
 }
 
+bool LancelotKnight::fightUltimecia(Ultimecia* ultimecia)
+{
+    int damage = int(hp * level * baseDamage);
+    ultimecia->reduceHP(damage);
+    if (ultimecia->getHP() == 0)
+    {
+        return true;
+    }
+    else
+    {
+        ultimecia->killKnight(this);
+        return false;
+    }
+}
+
 /* * * LancelotKnight * * */
 
 /* * * DragonKnight * * */
@@ -479,6 +590,7 @@ bool LancelotKnight::fight(BaseOpponent* opponent)
 DragonKnight::DragonKnight()
 {
     knightType = DRAGON;
+    canFightUltimecia = false;
 }
 
 bool DragonKnight::fight(BaseOpponent* opponent)
@@ -501,6 +613,21 @@ bool DragonKnight::fight(BaseOpponent* opponent)
     return result;
 }
 
+bool DragonKnight::fightUltimecia(Ultimecia* ultimecia)
+{
+    int damage = int(hp * level * baseDamage);
+    ultimecia->reduceHP(damage);
+    if (ultimecia->getHP() == 0)
+    {
+        return true;
+    }
+    else
+    {
+        ultimecia->killKnight(this);
+        return false;
+    }
+}
+
 /* * * DragonKnight * * */
 
 /* * * NormalKnight * * */
@@ -508,6 +635,7 @@ bool DragonKnight::fight(BaseOpponent* opponent)
 NormalKnight::NormalKnight()
 {
     knightType = NORMAL;
+    canFightUltimecia = false;
 }
 
 bool NormalKnight::fight(BaseOpponent* opponent)
@@ -755,6 +883,26 @@ bool ArmyKnights::hasExcaliburSword() const
     return isExcaliburSword;
 }
 
+void ArmyKnights::setPaladinShield(bool status)
+{
+    isPaladinShield = status;
+}
+
+void ArmyKnights::setLancelotSpear(bool status)
+{
+    isLancelotSpear = status;
+}
+
+void ArmyKnights::setGuinevereHair(bool status)
+{
+    isGuinevereHair = status;
+}
+
+void ArmyKnights::setExcaliburSword(bool status)
+{
+    isExcaliburSword = status;
+}
+
 /* * * ArmyKnights * * */
 
 /* * * KnightAdventure * * */
@@ -825,6 +973,33 @@ string BaseItem::typeToString()
         break;
     }
     return typeStr;
+}
+
+BaseItem* BaseItem::createItem(ItemType itemType)
+{
+    BaseItem* item = nullptr;
+    switch (itemType)
+    {
+	case ANTIDOTE:
+		item = new Antidote();
+		break;
+	case PHOENIX_1:
+		item = new PhoenixDownI();
+		break;
+	case PHOENIX_2:
+		item = new PhoenixDownII();
+		break;
+	case PHOENIX_3:
+		item = new PhoenixDownIII();
+		break;
+	case PHOENIX_4:
+		item = new PhoenixDownIV();
+		break;
+	default:
+		item = nullptr;
+		break;
+	}
+	return item;
 }
 
 /* * * BaseItem * * */
@@ -955,7 +1130,7 @@ PaladinBag::PaladinBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAn
 {
 }
 
-int PaladinBag::isOverSize(int _numAdd, ItemType _item)
+bool PaladinBag::isOverSize(int _numAdd, ItemType _item)
 {
     return 0;
 }
@@ -965,7 +1140,7 @@ LancelotBag::LancelotBag(BaseKnight* _knight, int _countPhoenixDownI, int _count
 {
 }
 
-int LancelotBag::isOverSize(int _numAdd, ItemType _item)
+bool LancelotBag::isOverSize(int _numAdd, ItemType _item)
 {
     int count = getCount();
     if (count + _numAdd > 16)
@@ -983,7 +1158,7 @@ DragonBag::DragonBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAnti
 {
 }
 
-int DragonBag::isOverSize(int _numAdd, ItemType _item)
+bool DragonBag::isOverSize(int _numAdd, ItemType _item)
 {
     int count = getCount();
     if (count + _numAdd > 14 || _item == ANTIDOTE)
@@ -1001,7 +1176,7 @@ NormalBag::NormalBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAnti
 {
 }
 
-int NormalBag::isOverSize(int _numAdd, ItemType _item)
+bool NormalBag::isOverSize(int _numAdd, ItemType _item)
 {
     int count = getCount();
     if (count + _numAdd > 19)
@@ -1193,13 +1368,24 @@ void TornBery::behave(ArmyKnights* _knight, bool _knightWinState)
         dealDamage(lastKnight);
         if (lastKnight->getKnightType() != DRAGON)
         {
-            lastKnight->becomeInfect();
+            if (lastKnight->useAntidote() == false)
+            {
+                infect(lastKnight);
+            }
         }
     }
     else
     {
         lastKnight->addLevel();
     }
+}
+
+void TornBery::infect(BaseKnight* knight)
+{
+    knight->reduceHP(10);
+    knight->getBag()->dropItem();
+    knight->getBag()->dropItem();
+    knight->getBag()->dropItem();
 }
 
 /* * * TornBery * * */
@@ -1218,6 +1404,99 @@ void QueenOfCards::behave(ArmyKnights* armyKnights, bool winState)
     BaseKnight* lastKnight = armyKnights->lastKnight();
     if (winState == false)
     {
-
+        lastKnight->setGil(lastKnight->getGil()/2);
+    }
+    else
+    {
+        if (lastKnight->getGil() * 2 < 999)
+        {
+            lastKnight->setGil(lastKnight->getGil() * 2);
+        }
+        else
+        {
+            // double gils means add the same amount of gils of the last knight to the army
+            armyKnights->addGil(lastKnight->getGil());
+        }
     }
 }
+
+/* * * Nina De Rings * * */
+
+void NinaDeRings::behave(ArmyKnights* armyKnights, bool knightWinState = true)
+{
+    BaseKnight* lastKnight = armyKnights->lastKnight();
+    if (lastKnight->getGil() >= 50 && lastKnight->getHP() < (1/3)*lastKnight->getMaxHP())
+    {
+        lastKnight->setGil(lastKnight->getGil() - 50);
+        lastKnight->addHP(int(lastKnight->getMaxHP() * 0.2));
+    }
+}
+
+/* * * Nina De Rings * * */
+
+/* * * Durian Garden * * */
+
+void DurianGarden::behave(ArmyKnights* armyKnights, bool knightWinState = true)
+{
+    armyKnights->lastKnight()->setHP(armyKnights->lastKnight()->getMaxHP());
+}
+
+/* * * Durian Garden * * */
+
+/* * * Omega Weapon * * */
+
+void OmegaWeapon::behave(ArmyKnights* armyKnights, bool knightWinState)
+{
+    BaseKnight* lastKnight = armyKnights->lastKnight();
+    if (knightWinState == false)
+    {
+        lastKnight->setHP(0);
+	}
+    else
+    {
+        lastKnight->setLevel(10);
+	}
+}
+
+/* * * Omega Weapon * * */
+
+/* * * Hades * * */
+
+void Hades::behave(ArmyKnights* armyKnights, bool knightWinState)
+{
+    BaseKnight* lastKnight = armyKnights->lastKnight();
+    if (knightWinState == false)
+    {
+		lastKnight->setHP(0);
+	}
+    else
+    {
+        armyKnights->setPaladinShield(true);
+	}
+}
+
+/* * * Hades * * */
+
+Ultimecia::Ultimecia() : hp(5000)
+{
+}
+
+void Ultimecia::reduceHP(int _hp)
+{
+    hp -= _hp;
+    if (hp <= 0)
+    {
+        hp = 0;
+	}
+}
+
+int Ultimecia::getHP()
+{
+    return hp;
+}
+
+void Ultimecia::killKnight(BaseKnight* knight)
+{
+    knight->setHP(0);
+}
+
