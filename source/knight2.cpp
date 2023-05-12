@@ -310,7 +310,7 @@ int BaseKnight::getGil() const
     return gil;
 }
 
-void BaseKnight::addGil(int _numOfGill)
+void ArmyKnights::addGil(int _numOfGill)
 {
     //if (gil + _numOfGill < 999)
     //{
