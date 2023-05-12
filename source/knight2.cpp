@@ -273,6 +273,30 @@ bool BaseKnight::isDragonKnight(int _maxHP)
         return false;
 }
 
+bool BaseKnight::isWonHades()
+{
+    if (level == 10 || (level == 8 && knightType == PALADIN))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool BaseKnight::isWonOmegaWeapon()
+{
+    if ((level == 10 && hp == maxhp) || knightType == DRAGON)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 BaseKnight::BaseKnight() : id(0), hp(0), maxhp(0), level(0), gil(0), bag(nullptr), knightType(NORMAL)
 {
 }
@@ -284,6 +308,18 @@ BaseKnight::~BaseKnight()
 int BaseKnight::getGil() const
 {
     return gil;
+}
+
+void BaseKnight::addGil(int _numOfGill)
+{
+    //if (gil + _numOfGill < 999)
+    //{
+    //    gil += _numOfGill;
+    //}
+    //else
+    //{
+    //    gil = 999;
+    //}
 }
 
 BaseBag* BaseKnight::getBag() const
@@ -306,14 +342,39 @@ void BaseKnight::setHP(int _new_hp)
     hp = _new_hp;
 }
 
+void BaseKnight::reduceHP(int new_reducehp)
+{
+    if (hp - new_reducehp > 0)
+    {
+        hp -= new_reducehp;
+    }
+    else
+    {
+        hp = 0;
+    }
+}
+
 void BaseKnight::setLevel(int _new_level)
 {
     level = _new_level;
 }
 
+void BaseKnight::addLevel()
+{
+    if (level + 1 < 10)
+    {
+        level++;
+    }
+}
+
 void BaseKnight::setGil(int _new_gil)
 {
     gil = _new_gil;
+}
+
+void BaseKnight::becomeInfect()
+{
+
 }
 
 string BaseKnight::toString() const {
@@ -334,7 +395,15 @@ string BaseKnight::toString() const {
 
 bool BaseKnight::fight(BaseOpponent* opponent)
 {
-
+    if (level > opponent->getLevelO())
+    {
+        return true;
+    }
+    else
+    {
+        //opponent->behave(this);
+        return false;
+    }
 }
 
 
@@ -348,6 +417,30 @@ PaladinKnight::PaladinKnight()
     knightType = PALADIN;
 }
 
+bool PaladinKnight::fight(BaseOpponent* opponent)
+{
+    // If it doesn't run into if block, it means that the knight is dead
+    bool result = false;
+	switch (opponent->getOpponentType())
+	{
+	case BASIC_MONSTER:
+		result = true;
+		break;
+	case TORNBERY:
+	case QUEEN_OF_CARDS:
+        result = BaseKnight::fight(opponent);
+		break;
+	case HADES:
+        result = isWonHades();
+		break;
+	case OMEGA_WEAPON:
+        result = isWonOmegaWeapon();
+	default:
+		break;
+	}
+    return result;
+}
+
 /* * * PaladinKnight * * */
 
 /* * * LancelotKnight * * */
@@ -355,6 +448,28 @@ PaladinKnight::PaladinKnight()
 LancelotKnight::LancelotKnight()
 {
     knightType = LANCELOT;
+}
+
+bool LancelotKnight::fight(BaseOpponent* opponent)
+{
+    bool result = false;
+	switch (opponent->getOpponentType())
+	{
+    case BASIC_MONSTER:
+        result = true;
+        break;
+    case TORNBERY:
+    case QUEEN_OF_CARDS:
+        result = BaseKnight::fight(opponent);
+        break;
+    case HADES:
+        result = isWonHades();
+    case OMEGA_WEAPON:
+        result = isWonOmegaWeapon();
+    default: 
+        break;
+	}
+    return result;
 }
 
 /* * * LancelotKnight * * */
@@ -366,6 +481,26 @@ DragonKnight::DragonKnight()
     knightType = DRAGON;
 }
 
+bool DragonKnight::fight(BaseOpponent* opponent)
+{
+    bool result = false;
+    switch (opponent->getOpponentType())
+    {
+    case BASIC_MONSTER:
+    case QUEEN_OF_CARDS:
+    case TORNBERY:
+        result = BaseKnight::fight(opponent);
+		break;
+    case HADES:
+        result = isWonHades();
+    case OMEGA_WEAPON:
+        result = isWonOmegaWeapon();
+    default:
+        break;
+    }
+    return result;
+}
+
 /* * * DragonKnight * * */
 
 /* * * NormalKnight * * */
@@ -373,6 +508,26 @@ DragonKnight::DragonKnight()
 NormalKnight::NormalKnight()
 {
     knightType = NORMAL;
+}
+
+bool NormalKnight::fight(BaseOpponent* opponent)
+{
+    bool result = false;
+    switch (opponent->getOpponentType())
+    {
+    case BASIC_MONSTER:
+    case QUEEN_OF_CARDS:
+    case TORNBERY:
+        result = BaseKnight::fight(opponent);
+        break;
+    case HADES:
+        result = isWonHades();
+    case OMEGA_WEAPON:
+        result = isWonOmegaWeapon();
+    default:
+        break;
+    }
+    return result;
 }
 
 /* * * NormalKnight * * */
@@ -391,6 +546,8 @@ Events::Events(const string& _file_events)
     isMetOmegaWeapon = false;
     isMetHades = false;
     armyKnights = nullptr;
+    currentEventID = 0;
+    currentEventOrder = 0;
 }
 
 Events::~Events()
@@ -418,22 +575,99 @@ int Events::get(int eventIndex) const
     return eventList[eventIndex];
 }
 
-void Events::runEvent(int _eventID)
+void Events::runEvent()
 {
     // Write code create opponent based on each type of _event_i
 
+    for (currentEventOrder = 0; currentEventOrder < count(); currentEventOrder++)
+    {
+        currentEventID = get(currentEventOrder);
+        if (1 <= currentEventOrder && currentEventOrder <= 5)
+            eventBasicOpponent();
+        else if (currentEventID == 6)
+            eventTornberry();
+        else if (currentEventID == 7)
+            eventQueenOfCards();
+        else if (currentEventID == 8)
+            eventNinaDeRings();
+        else if (currentEventID == 9)
+            eventDurianGarden();
+        else if (currentEventID == 10 && isMetOmegaWeapon == false)
+            eventOmegaWeapon();
+        else if (currentEventID == 11 && isMetHades == false)
+            eventHades();
+        else if (currentEventID >= 112 && currentEventOrder <= 114)
+            eventGetPhoenixDown();
+        else if (currentEventID == 95)
+            eventGetPaladinShield();
+        else if (currentEventID == 96)
+            eventGetLancelotSpear();
+        else if (currentEventID == 97)
+            eventGetGuinevereHair();
+        else if (currentEventID == 98)
+            eventGetExcaliburSword();
+        else if (currentEventID == 99)
+            eventUltimecia();
+    }
+}
 
-    //if (1 <= event_i <= 5)
-    //else if (event_i == 6)
-    //else if (event_i == 7)
-    //else if (event_i == 8)
-    //else if (event_i == 9)
-    //else if (event_i == 10 && isMetOmegaWeapon == false)
-    //else if (event_i == 11 && isMetHades == false)
-    //else if (event_i >= 112 && event_i <= 114)
-    //else if (event_i >= 95 && event_i <= 97)
-    //else if (event_i == 98)
-    //else if (event_i == 99)
+void Events::eventBasicOpponent()
+{
+    BaseMonster* newMons;
+    newMons = BaseMonster::defineBasicMonster(currentEventOrder, currentEventID);
+
+}
+
+void Events::eventTornberry()
+{
+}
+
+void Events::eventQueenOfCards()
+{
+}
+
+void Events::eventNinaDeRings()
+{
+}
+
+void Events::eventDurianGarden()
+{
+}
+
+void Events::eventOmegaWeapon()
+{
+}
+
+void Events::eventHades()
+{
+}
+
+void Events::eventGetPhoenixDown()
+{
+}
+
+void Events::eventGetAntidote()
+{
+}
+
+void Events::eventGetExcaliburSword()
+{
+}
+
+void Events::eventGetGuinevereHair()
+{
+}
+
+void Events::eventGetLancelotSpear()
+{
+}
+
+void Events::eventGetPaladinShield()
+{
+}
+
+void Events::eventUltimecia()
+{
 }
 
 /* * * Events * * */
@@ -479,7 +713,7 @@ ArmyKnights::~ArmyKnights()
 
 bool ArmyKnights::fight(BaseOpponent* _opponent)
 {
-    return false;
+    return lastKnight()->fight(_opponent);
 }
 
 bool ArmyKnights::adventure(Events * _events)
@@ -495,6 +729,10 @@ int ArmyKnights::count() const
 BaseKnight* ArmyKnights::lastKnight() const
 {
     return listOfKnights[0];
+}
+
+void ArmyKnights::lastKnightUpdateStatus()
+{
 }
 
 bool ArmyKnights::hasPaladinShield() const
@@ -537,10 +775,7 @@ void KnightAdventure::loadEvents(const string& _file_events)
 
 void KnightAdventure::run()
 {
-    for (int i = 0; i < events->count(); i++)
-    {
-
-    }
+    events->runEvent();
 }
 
 KnightAdventure::~KnightAdventure()
@@ -779,32 +1014,210 @@ int NormalBag::isOverSize(int _numAdd, ItemType _item)
     }
 }
 
-/* * * BasicMonster * * */
+/* * * BaseMonster * * */
 
-void BasicMonster::calculateLevelO()
+void BaseOpponent::calculateLevelO()
 {
     levelO = (eventOrder + eventID) % 10 + 1;
 }
 
-BasicMonster::BasicMonster(int _eventOrder, int _eventID) : baseDamage(0), gilReward(0)
+BaseMonster::BaseMonster(int _eventOrder, int _eventID)
 {
+    baseDamage = 0;
     calculateLevelO();
 }
 
-int BasicMonster::getLevelO()
+int BaseOpponent::getLevelO()
 {
     return levelO;
 }
 
-void BasicMonster::dealDamage(BaseKnight* knight)
+int BaseOpponent::getGilReward()
 {
-
+    return gilReward;
 }
 
-/* * * BasicMonster * * */
+void BaseOpponent::dealDamage(BaseKnight* _knight)
+{
+    int knightLevel = _knight->getLevel();
+    int reduceHP = baseDamage * (levelO - knightLevel);
+    _knight->reduceHP(reduceHP);
+}
 
-MadBear::MadBear(int eventOrder, int eventID) : BasicMonster(eventOrder, eventID)
+void BaseMonster::behave(ArmyKnights* _knight, bool _knightWinState)
+{
+    BaseKnight* lastKnight = _knight->lastKnight();
+    dealDamage(lastKnight);
+}
+
+BaseMonster* BaseMonster::defineBasicMonster(int _eventOrder, int _eventID)
+{
+    switch (_eventID)
+    {
+        case 1:
+		    return new MadBear(_eventOrder, _eventID);
+		    break;
+        case 2:
+            return new Bandit(_eventOrder, _eventID);
+            break;
+        case 3:
+            return new LordLupin(_eventOrder, _eventID);
+			break;
+        case 4:
+            return new Elf(_eventOrder, _eventID);
+            break;
+        case 5:
+            return new Troll(_eventOrder, _eventID);
+            break;
+        default:
+            return nullptr;
+            break;
+    }
+}
+
+/* * * BaseMonster * * */
+
+/* * * MadBear * * */
+
+MadBear::MadBear(int _eventOrder, int _eventID) : BaseMonster(eventOrder, eventID)
 {
 	baseDamage = 10;
 	gilReward = 100;
+}
+
+/* * * MadBear * * */
+
+/* * * Bandit * * */
+
+Bandit::Bandit(int _eventOrder, int _eventID) : BaseMonster(eventOrder, eventID)
+{
+	baseDamage = 15;
+	gilReward = 150;
+}
+
+/* * * Bandit * * */
+
+/* * * LordLupin * * */
+
+LordLupin::LordLupin(int _eventOrder, int _eventID) : BaseMonster(eventOrder, eventID)
+{
+	baseDamage = 45;
+	gilReward = 450;
+}
+
+/* * * LordLupin * * */
+
+/* * * Elf * * */
+
+Elf::Elf(int _eventOrder, int _eventID) : BaseMonster(eventOrder, eventID)
+{
+	baseDamage = 75;
+	gilReward = 750;
+}
+
+/* * * Elf * * */
+
+/* * * Troll * * */
+
+Troll::Troll(int _eventOrder, int _eventID) : BaseMonster(eventOrder, eventID)
+{
+	baseDamage = 95;
+	gilReward = 800;
+}
+
+
+/* * * Troll * * */
+
+/* * * BaseOpponent * * */
+
+BaseOpponent::BaseOpponent() : eventOrder(0), eventID(0), levelO(0), gilReward(0), baseDamage(0)
+{
+}
+
+OpponentType BaseOpponent::getOpponentType()
+{
+    if (1 <= eventID && eventID <= 5)
+    {
+        return BASIC_MONSTER;
+    }
+    else if (eventID == 6)
+    {
+        return TORNBERY;
+    }
+    else if (eventID == 7)
+    {
+        return QUEEN_OF_CARDS;
+    }
+    else if (eventID == 8)
+    {
+        return NINA_DE_RINGS;
+    }
+    else if (eventID == 9)
+    {
+        return DURIAN_GARDEN;
+    }
+    else if (eventID == 10)
+    {
+        return OMEGA_WEAPON;
+    }
+    else if (eventID == 11)
+    {
+        return HADES;
+    }
+    else if (eventID == 99)
+    {
+        return ULTIMECIA;
+    }
+    else
+    {
+        return UNKNOWN;
+    }
+}
+
+/* * * BaseOpponent * * */
+
+/* * * TornBery * * */
+
+TornBery::TornBery(int _eventOrder, int _eventID) : BaseOpponent()
+{
+    eventOrder = _eventOrder;
+	eventID = _eventID;
+    calculateLevelO();
+}
+
+void TornBery::behave(ArmyKnights* _knight, bool _knightWinState)
+{
+    BaseKnight* lastKnight = _knight->lastKnight();
+    if (_knightWinState == false)
+    {
+        dealDamage(lastKnight);
+        if (lastKnight->getKnightType() != DRAGON)
+        {
+            lastKnight->becomeInfect();
+        }
+    }
+    else
+    {
+        lastKnight->addLevel();
+    }
+}
+
+/* * * TornBery * * */
+
+/* * * Queen Of Cards * * */
+
+QueenOfCards::QueenOfCards(int _eventOrder, int _eventID)
+{
+    eventOrder = _eventOrder;
+	eventID = _eventID;
+	calculateLevelO();
+}
+
+void QueenOfCards::behave(ArmyKnights* armyKnights, bool winState)
+{
+    BaseKnight* lastKnight = armyKnights->lastKnight();
+    if (winState == false)
+    {
+
+    }
 }

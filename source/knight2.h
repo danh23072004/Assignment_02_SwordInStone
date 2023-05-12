@@ -22,8 +22,20 @@ enum ItemType
     PHOENIX_3 = 3, 
     PHOENIX_4 = 4
 };
+enum OpponentType
+{
+    BASIC_MONSTER = 0,
+    TORNBERY = 1,
+    QUEEN_OF_CARDS = 2,
+    NINA_DE_RINGS = 3,
+    DURIAN_GARDEN = 4,
+    OMEGA_WEAPON = 5,
+    HADES = 6,
+    ULTIMECIA = 7,
+    UNKNOWN = -1,
+};
 
-class BaseKnight; // forward declaration for BaseKnight
+class BaseKnight; class ArmyKnights; // forward declaration for BaseKnight, ArmyKnights
 
 class BaseItem {
 protected:
@@ -135,58 +147,77 @@ public:
 
 class BaseOpponent
 {
-    virtual void behave() = 0;
+protected:
+    void calculateLevelO();
+    int eventOrder;
+    int levelO;
+    int eventID;
+    int baseDamage;
+    int gilReward;
+    void dealDamage(BaseKnight* knight);
+public:
+    BaseOpponent();
+    OpponentType getOpponentType();
+    int getLevelO();
+    int getGilReward();
+    virtual void behave(ArmyKnights* knight, bool knightWinState) = 0;
 };
 
-class BasicMonster : public BaseOpponent
+class Ultimecia
 {
 private:
-    void calculateLevelO();
-protected:
-    BasicMonster(int eventOrder, int eventID);
-    int baseDamage;
-    int levelO;
-    int eventOrder;
-    int eventID;
-    int gilReward;
 public:
-    int getLevelO();
-    void dealDamage(BaseKnight* knight);
-    virtual void behave() override final;
 };
 
-class MadBear : public BasicMonster
+class BaseMonster : public BaseOpponent
+{
+public:
+    BaseMonster(int eventOrder, int eventID);
+    virtual void behave(ArmyKnights* knight, bool knightWinState) override;
+    static BaseMonster* defineBasicMonster(int eventOrder, int eventID);
+};
+
+class MadBear : public BaseMonster
 {
 public: 
     MadBear(int eventOrder, int eventID);
 };
 
-class Bandit : public BaseOpponent, public BasicMonster
+class Bandit : public BaseMonster
 {
+public:
+    Bandit(int eventOrder, int eventID);
 };
 
-class LordLupin : public BaseOpponent, public BasicMonster
+class LordLupin : public BaseMonster
 {
-
+public:
+    LordLupin(int eventOrder, int eventID);
 };
 
-class Elf : public BaseOpponent, public BasicMonster
+class Elf : public BaseMonster
 {
-
+public:
+    Elf(int eventOrder, int eventID);
 };
 
-class Troll : public BaseOpponent, public BasicMonster
+class Troll : public BaseMonster
 {
-
+public:
+    Troll(int eventOrder, int eventID);
 };
 
 class TornBery : public BaseOpponent
 {
-
+public:
+    TornBery(int eventOrder, int eventID);
+    virtual void behave(ArmyKnights* armyKnights, bool knightWinState) override;
 };
 
 class QueenOfCards : public BaseOpponent
 {
+    QueenOfCards(int eventOrder, int eventID);
+    virtual void behave(ArmyKnights* armyKnights, bool knightWinState) override;
 };
 
 class NinaDeRings : public BaseOpponent
@@ -211,13 +242,16 @@ private:
     static bool isLancelotKnight(int maxHP);
     static bool isDragonKnight(int maxHP);
 protected:
+    const int maxgil = 999;
+    int maxhp;
     int id;
     int hp;
-    int maxhp;
     int level;
     int gil;
     BaseBag* bag;
     KnightType knightType;
+    bool isWonHades();
+    bool isWonOmegaWeapon();
 public:
     BaseKnight();
     ~BaseKnight();
@@ -227,59 +261,71 @@ public:
     int getMaxHP() const;
     int getLevel() const;
 	int getGil() const;
+    void buy();
     BaseBag* getBag() const;
     KnightType getKnightType();
     void setID(int new_id);
     void setHP(int new_hp);
+    void reduceHP(int new_reducehp);
     void setLevel(int new_level);
+    void addLevel();
     void setGil(int new_gil);
+    void useMedicine(ItemType itemType);
+    virtual void becomeInfect();
 
     string toString() const;
-    bool fight(BaseOpponent* opponent);
+    virtual bool fight(BaseOpponent* opponent);
 };
 
 class PaladinKnight : public BaseKnight
 {
+private:
+    const double baseDamage = 0.06;
 public:
     PaladinKnight();
+    virtual bool fight(BaseOpponent* opponent) override;
 };
 
 class LancelotKnight : public BaseKnight
 {
+private:
+    const double baseDamage = 0.05;
 public:
     LancelotKnight();
+    virtual bool fight(BaseOpponent* opponent) override;
 };
 
 class DragonKnight : public BaseKnight
 {
+private:
+    const double baseDamage = 0.075;
 public:
     DragonKnight();
+    virtual bool fight(BaseOpponent* opponent) override;
 };
 
 class NormalKnight : public BaseKnight
 {
 public:
     NormalKnight();
+    virtual bool fight(BaseOpponent* opponent) override;
 };
 
 class ArmyKnights;
 
 class Events {
 private:
+    int currentEventID;
+    int currentEventOrder;
     ArmyKnights* armyKnights;
     int countEvent;
     int eventList[1000] = {};
     bool isMetOmegaWeapon;
     bool isMetHades;
-public:
-    ArmyKnights* getArmyKnights();
-    void setArmyKnights(ArmyKnights* _armyKnights);
-    int count() const;
-    int get(int i) const;
-    void runEvent(int eventID);
     void eventBasicOpponent();
     void eventTornberry();
     void eventQueenOfCards();
+    void eventNinaDeRings();
     void eventDurianGarden();
     void eventOmegaWeapon();
     void eventHades();
@@ -289,6 +335,14 @@ public:
     void eventGetGuinevereHair();
     void eventGetLancelotSpear();
     void eventGetPaladinShield();
+    void eventUltimecia();
+public:
+    ArmyKnights* getArmyKnights();
+    void setArmyKnights(ArmyKnights* _armyKnights);
+    int count() const;
+    int get(int i) const;
+    void runEvent();
+
     Events(const string& file_events);
     ~Events();
 };
@@ -309,7 +363,9 @@ public:
     bool adventure(Events * events);
     int count() const;
     BaseKnight* lastKnight() const;
-
+    void addGil(int numOfGill);
+    void addItem(ItemType item);
+    void lastKnightUpdateStatus();
     bool hasPaladinShield() const;
     bool hasLancelotSpear() const;
     bool hasGuinevereHair() const;
