@@ -305,7 +305,7 @@ public:
     void setLevel(int new_level);
     void addLevel();
     void setGil(int new_gil);
-    void revive();
+    void revive(bool winState);
 
     string toString() const;
     virtual bool fight(BaseOpponent* opponent);

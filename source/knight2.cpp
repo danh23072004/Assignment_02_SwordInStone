@@ -35,7 +35,8 @@ BaseBag::BaseBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote
     countItem(0), knight(_knight), head(nullptr), tail(nullptr)
 {
     int maxSize = 0;
-    switch (knight->getKnightType())
+    KnightType type = knight->getKnightType();
+    switch (type)
     {
         case DRAGON:
 			maxSize = 14;
@@ -51,11 +52,11 @@ BaseBag::BaseBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote
             break;
     }
     // These lines below are to make sure the number of items in the bag is not over the maximum size
-    if (_countPhoenixDownI > maxSize)
+    if (_countPhoenixDownI > maxSize && type != LANCELOT)
     {
 		_countPhoenixDownI = maxSize;
 	}
-    if (_countPhoenixDownI > 0 && (_countPhoenixDownI < maxSize || maxSize == 0))
+    if (_countPhoenixDownI > 0)
     {
         for (int i = 0; i < _countPhoenixDownI; i++)
         {
@@ -63,12 +64,21 @@ BaseBag::BaseBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote
             insertFirst(phoenixDown1);
         }
     }
-    maxSize = maxSize - _countPhoenixDownI;
-    if (_countAntidote > maxSize)
+
+    if (maxSize != 0)
+    {
+        maxSize = maxSize - _countPhoenixDownI;
+    }
+
+    if (type == DRAGON)
+    {
+        _countAntidote = 0;
+    }
+    else if (_countAntidote > maxSize && type != LANCELOT)
     {
         _countAntidote = maxSize;
     }
-    if (_countAntidote > 0 || maxSize == 0)
+    if (_countAntidote > 0)
     {
         for (int i = 0; i < _countAntidote; i++)
         {
@@ -130,9 +140,11 @@ BaseItem* BaseBag::getFirstPhoenixDown()
     {
         return nullptr;
     }
+    //BagNode* chooseItem = nullptr;
     BagNode* findItem = head;
-    while (BaseBag::isPhoenixDown(findItem->item) == false && findItem->item->canUse(knight) == false)
+    while (BaseBag::isPhoenixDown(findItem->item) == false || findItem->item->canUse(knight) == false)
     {
+        bool test = findItem->item->canUse(knight);
         findItem = findItem->nextPtr;
         if (findItem->nextPtr == nullptr)
         {
@@ -140,6 +152,7 @@ BaseItem* BaseBag::getFirstPhoenixDown()
         }
         findItem = findItem->nextPtr;
     }
+    bool test = findItem->item->canUse(knight);
     return findItem->item;
 }
 
@@ -458,9 +471,10 @@ void ArmyKnights::addItem(ItemType item)
     int receiveKnight = numOfKnights - 1;
     while (receiveKnight >= 0)
     {
-        if (listOfKnights[receiveKnight]->getBag()->isOverSize(1, item))
+        if (listOfKnights[receiveKnight]->getBag()->isOverSize(1, item) == 0)
         {
             listOfKnights[receiveKnight]->getBag()->insertFirst(phoenixDown);
+            break;
 		}
         else
         {
@@ -531,10 +545,13 @@ void BaseKnight::setGil(int _new_gil)
     gil = _new_gil;
 }
 
-void BaseKnight::revive()
+void BaseKnight::revive(bool _winState)
 {
-    usePhoenixDown();
-    callingPhoenix();
+    if (_winState == false)
+    {
+        usePhoenixDown();
+        callingPhoenix();
+    }
 }
 
 void BaseKnight::usePhoenixDown()
@@ -543,7 +560,6 @@ void BaseKnight::usePhoenixDown()
     BaseItem* chosenPhoenixDown = bag->getFirstPhoenixDown();
     if (chosenPhoenixDown != nullptr)
     {
-
         chosenPhoenixDown->use(this);
 	}
 }
@@ -579,7 +595,7 @@ string BaseKnight::toString() const {
 
 bool BaseKnight::fight(BaseOpponent* opponent)
 {
-    if (level > opponent->getLevelO())
+    if (level >= opponent->getLevelO())
     {
         return true;
     }
@@ -858,7 +874,7 @@ void Events::eventBasicOpponent()
     newMons = BaseMonster::defineBasicMonster(currentEventOrder, currentEventID);
     bool winState = armyKnights->fight(newMons);
     newMons->behave(armyKnights, winState);
-    armyKnights->lastKnight()->revive();
+    armyKnights->lastKnight()->revive(winState);
     armyKnights->updateNumOfKnight(armyKnights->lastKnight());
     delete newMons;
 }
@@ -868,7 +884,7 @@ void Events::eventTornberry()
     TornBery* tornbery = new TornBery(currentEventOrder, currentEventID);
     bool winState = armyKnights->fight(tornbery);
     tornbery->behave(armyKnights, winState);
-    armyKnights->lastKnight()->revive();
+    armyKnights->lastKnight()->revive(winState);
     armyKnights->updateNumOfKnight(armyKnights->lastKnight());
     delete tornbery;
 }
@@ -904,7 +920,7 @@ void Events::eventOmegaWeapon()
     {
         isMetOmegaWeapon = true;
     }
-    armyKnights->lastKnight()->revive();
+    armyKnights->lastKnight()->revive(winState);
 	armyKnights->updateNumOfKnight(armyKnights->lastKnight());
     delete omegaWeapon;
 }
@@ -918,7 +934,7 @@ void Events::eventHades()
     {
 		isMetHades = true;
 	}
-    armyKnights->lastKnight()->revive();
+    armyKnights->lastKnight()->revive(winState);
     armyKnights->updateNumOfKnight(armyKnights->lastKnight());
     delete hades;
 }
@@ -933,8 +949,10 @@ void Events::eventGetPhoenixDown()
 		break;
     case 113:
         phoenix = PHOENIX_3;
+        break;
     case 114:
         phoenix = PHOENIX_4;
+        break;
     default:
         phoenix = UNKNOWN_ITEM;
         break;
@@ -1307,7 +1325,7 @@ PhoenixDownII::PhoenixDownII() : BaseItem()
 
 bool PhoenixDownII::canUse(BaseKnight* _knight)
 {
-    if (_knight->getHP() < int(_knight->getMaxHP() / 4))
+    if (_knight->getHP() < int(_knight->getMaxHP() / 4.0))
     {
         return true;
     }
@@ -1331,7 +1349,7 @@ PhoenixDownIII::PhoenixDownIII() : BaseItem()
 
 bool PhoenixDownIII::canUse(BaseKnight* _knight)
 {
-    if (_knight->getHP() < int(_knight->getMaxHP() / 3))
+    if (_knight->getHP() < int(_knight->getMaxHP() / 3.0))
     {
         return true;
     }
@@ -1362,7 +1380,7 @@ PhoenixDownIV::PhoenixDownIV() : BaseItem()
 
 bool PhoenixDownIV::canUse(BaseKnight* _knight)
 {
-    if (_knight->getHP() < int(_knight->getMaxHP() / 2))
+    if (_knight->getHP() < int(_knight->getMaxHP() / 2.0))
     {
 		return true;
 	}
@@ -1733,7 +1751,7 @@ NinaDeRings::NinaDeRings() : BaseOpponent()
 void NinaDeRings::behave(ArmyKnights* armyKnights, bool knightWinState)
 {
     BaseKnight* lastKnight = armyKnights->lastKnight();
-    if (lastKnight->getGil() >= 50 && lastKnight->getHP() < (1/3)*lastKnight->getMaxHP())
+    if (lastKnight->getGil() >= 50 && (lastKnight->getHP() < (1.0/3.0)*lastKnight->getMaxHP()))
     {
         lastKnight->setGil(lastKnight->getGil() - 50);
         lastKnight->addHP(int(lastKnight->getMaxHP() * 0.2));
