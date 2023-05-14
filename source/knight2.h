@@ -397,7 +397,7 @@ public:
     ~ArmyKnights();
 
     bool fight(BaseOpponent * opponent);
-    bool fightUltimecia(Ultimecia* ultimecia);
+    void fightUltimecia(Ultimecia* ultimecia);
     bool adventure(Events * events);
     int count() const;
     BaseKnight* lastKnight() const;

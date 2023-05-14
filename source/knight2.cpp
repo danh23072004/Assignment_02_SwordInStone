@@ -52,7 +52,7 @@ BaseBag::BaseBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote
             break;
     }
     // These lines below are to make sure the number of items in the bag is not over the maximum size
-    if (_countPhoenixDownI > maxSize && type != LANCELOT)
+    if (_countPhoenixDownI > maxSize && type != PALADIN)
     {
 		_countPhoenixDownI = maxSize;
 	}
@@ -74,7 +74,7 @@ BaseBag::BaseBag(BaseKnight* _knight, int _countPhoenixDownI, int _countAntidote
     {
         _countAntidote = 0;
     }
-    else if (_countAntidote > maxSize && type != LANCELOT)
+    else if (_countAntidote > maxSize && type != PALADIN)
     {
         _countAntidote = maxSize;
     }
@@ -140,12 +140,10 @@ BaseItem* BaseBag::getFirstPhoenixDown()
     {
         return nullptr;
     }
-    //BagNode* chooseItem = nullptr;
     BagNode* findItem = head;
+
     while (BaseBag::isPhoenixDown(findItem->item) == false || findItem->item->canUse(knight) == false)
     {
-        bool test = findItem->item->canUse(knight);
-        findItem = findItem->nextPtr;
         if (findItem->nextPtr == nullptr)
         {
             return nullptr;
@@ -206,7 +204,6 @@ BagNode* BaseBag::findItem(ItemType _itemType)
     BagNode* findItem = head;
     while (findItem->item->getType() != _itemType)
     {
-        findItem = findItem->nextPtr;
         if (findItem->nextPtr == nullptr)
         {
             return nullptr;
@@ -872,6 +869,11 @@ void Events::runEvent()
             eventUltimecia();
 
         armyKnights->printInfo();
+        if (armyKnights->count() == 0)
+        {
+            armyKnights->setWinUltimecia(false);
+            break;
+        }
     }
 }
 
@@ -1061,7 +1063,7 @@ bool ArmyKnights::fight(BaseOpponent* _opponent)
     return lastKnight()->fight(_opponent);
 }
 
-bool ArmyKnights::fightUltimecia(Ultimecia* ultimecia)
+void ArmyKnights::fightUltimecia(Ultimecia* ultimecia)
 {
     bool result = false;
     int currentKnight = numOfKnights - 1;
@@ -1071,7 +1073,7 @@ bool ArmyKnights::fightUltimecia(Ultimecia* ultimecia)
         {
             if (listOfKnights[currentKnight]->fightUltimecia(ultimecia) == true)
             {
-                result = true;
+                winUltimecia = true;
                 break;
             }
             updateNumOfKnight(listOfKnights[currentKnight]);
@@ -1080,9 +1082,10 @@ bool ArmyKnights::fightUltimecia(Ultimecia* ultimecia)
 	}
     if (result == false)
     {
+        winUltimecia = false;
         numOfKnights = 0;
     }
-    return result;
+    //return result;
 }
 
 bool ArmyKnights::adventure(Events * _events)
@@ -1733,7 +1736,10 @@ void QueenOfCards::behave(ArmyKnights* armyKnights, bool winState)
     BaseKnight* lastKnight = armyKnights->lastKnight();
     if (winState == false)
     {
-        lastKnight->setGil(lastKnight->getGil()/2);
+        if (armyKnights->lastKnight()->getKnightType() != PALADIN)
+        {
+            lastKnight->setGil(lastKnight->getGil() / 2);
+        }
     }
     else
     {
