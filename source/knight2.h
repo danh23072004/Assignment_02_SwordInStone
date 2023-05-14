@@ -305,6 +305,7 @@ public:
     void setLevel(int new_level);
     void addLevel();
     void setGil(int new_gil);
+    void reduceGil(int reduce_gil);
     void revive(bool winState);
 
     string toString() const;

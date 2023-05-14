@@ -434,14 +434,16 @@ void BaseKnight::setInfect(bool new_infect)
 
 void BaseKnight::buy(int gil)
 {
-    if (gil == 50 && hp < maxhp * (1 / 3))
+    if (gil == 50 && hp < maxhp * (1.0 / 3.0))
     {
         // Buy from nina de rings
-        addHP(1 / 5 * maxhp);
+        addHP(int(1.0 / 5.0 * maxhp));
+        reduceGil(50);
     }
     else if (gil == 100 && hp <= 0)
     {
-        addHP(1 / 2 * maxhp);
+        addHP(int(1.0 / 2.0 * maxhp));
+        reduceGil(100);
     }
 }
 
@@ -543,6 +545,11 @@ void BaseKnight::addLevel()
 void BaseKnight::setGil(int _new_gil)
 {
     gil = _new_gil;
+}
+
+void BaseKnight::reduceGil(int reduce_gil)
+{
+    gil -= reduce_gil;
 }
 
 void BaseKnight::revive(bool _winState)
@@ -1360,11 +1367,11 @@ void PhoenixDownIII::use(BaseKnight* _knight)
 {
     if (_knight->getHP() <= 0)
     {
-        _knight->setHP(int(_knight->getMaxHP() / 3));
+        _knight->setHP(int(_knight->getMaxHP() / 3.0));
     }
     else
     {
-        _knight->addHP(int(_knight->getMaxHP() / 4));
+        _knight->addHP(int(_knight->getMaxHP() / 4.0));
     }
 	_knight->getBag()->deleteFirstSpecificItem(PHOENIX_3);
 }
@@ -1391,11 +1398,11 @@ void PhoenixDownIV::use(BaseKnight* _knight)
 {
     if (_knight->getHP() <= 0)
     {
-		_knight->setHP(int(_knight->getMaxHP() / 2));
+		_knight->setHP(int(_knight->getMaxHP() / 2.0));
 	}
     else
     {
-		_knight->addHP(int(_knight->getMaxHP() / 5));
+		_knight->addHP(int(_knight->getMaxHP() / 5.0));
 	}
 	_knight->getBag()->deleteFirstSpecificItem(PHOENIX_4);
 }
@@ -1675,12 +1682,12 @@ TornBery::TornBery(int _eventOrder, int _eventID) : BaseOpponent()
     calculateLevelO();
 }
 
-void TornBery::behave(ArmyKnights* _knight, bool _knightWinState)
+void TornBery::behave(ArmyKnights* _armyKnights, bool _knightWinState)
 {
-    BaseKnight* lastKnight = _knight->lastKnight();
+    BaseKnight* lastKnight = _armyKnights->lastKnight();
     if (_knightWinState == false)
     {
-        dealDamage(lastKnight);
+        //dealDamage(lastKnight);
         if (lastKnight->getKnightType() != DRAGON)
         {
             lastKnight->setInfect(true);
@@ -1840,4 +1847,3 @@ void Ultimecia::killKnight(BaseKnight* knight)
 {
     knight->setHP(0);
 }
-
