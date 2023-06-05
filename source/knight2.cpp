@@ -378,7 +378,7 @@ bool BaseKnight::isDragonKnight(int _maxHP)
 
 bool BaseKnight::isWonHades()
 {
-    if (level == 10 || (level == 8 && knightType == PALADIN))
+    if (level == 10 || (level >= 8 && knightType == PALADIN))
     {
         return true;
     }
@@ -690,8 +690,10 @@ bool LancelotKnight::fight(BaseOpponent* opponent)
         break;
     case HADES:
         result = isWonHades();
+        break;
     case OMEGA_WEAPON:
         result = isWonOmegaWeapon();
+        break;
     default: 
         break;
 	}
@@ -735,8 +737,10 @@ bool DragonKnight::fight(BaseOpponent* opponent)
 		break;
     case HADES:
         result = isWonHades();
+        break;
     case OMEGA_WEAPON:
         result = isWonOmegaWeapon();
+        break;
     default:
         break;
     }
@@ -780,8 +784,10 @@ bool NormalKnight::fight(BaseOpponent* opponent)
         break;
     case HADES:
         result = isWonHades();
+        break;
     case OMEGA_WEAPON:
         result = isWonOmegaWeapon();
+        break;
     default:
         break;
     }
